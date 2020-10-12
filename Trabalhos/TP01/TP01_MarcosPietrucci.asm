@@ -33,7 +33,7 @@ print_desce: PUSHA
              MOV DX, offset pulalin
              INT 21h
              POPA
-             ret
+             JMP return
 
 
 return:     ret
