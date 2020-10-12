@@ -1,0 +1,4 @@
+- As entradas dos usuarios serão por interrupções? (Aparentemente interrupções  por hardware não funcionam. Não tem como o programa detectar que eu digitei algo)
+	Não, devo abrir um espaço de tempo a cada loop para que o usuário digite um ou mais comandos. E se não tiver entradas? Não fazer nada (talvez voltar para o terreo)
+- Qual vai ser o "clock" de leitura?
+	- Vou considerar que a cada 1 andar que o elevador sobe/desce o programa abre uma chamada para buscar por novas entradas 

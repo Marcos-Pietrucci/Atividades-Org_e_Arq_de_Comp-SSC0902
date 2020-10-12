@@ -1,17 +1,16 @@
 org 100h
 
-
+;index registers BX, SI, DI and BP 
 ;SI armazena indice do vetor 1
 ;DI armazena indice do vetor 2
 ;BX armazena indice do vetor Maior
 
-lea SI,Vetor1
-lea DI,Vetor2
-lea BX,VetorM
-
-
-compara:    MOV  AH, [SI]
-            MOV  AL, [DI]
+LEA SI,Vetor1 ; OU MOV SI, 0    Comando LEA linka os registradores de index ao index da variavel
+LEA DI,Vetor2 ; OU MOV DI, 0
+LEA BX,VetorM ; OU MOV bx, 0
+            
+compara:    MOV  AH, [SI]        ; OU MOV  AH, Vetor1[SI]  
+            MOV  AL, [DI]        ; OU MOV  AL, Vetor2[DI]
             INC  SI
             INC  DI
             CMP  AH, 0
@@ -20,16 +19,12 @@ compara:    MOV  AH, [SI]
             JNLE v1Maior
             JMP  v2Maior
 
-v1Maior:    MOV  DH, QtdeV1
-            INC  DH
-            MOV  QtdeV1, DH
+v1Maior:    INC  [QtdeV1]
             MOV  [BX], AH
             INC  BX
             JMP  compara
            
-v2Maior:    MOV  DH, QtdeV2
-            INC  DH
-            MOV  QtdeV2, DH
+v2Maior:    INC  QtdeV2
             MOV  [BX], AL
             INC  BX
             JMP  compara            
@@ -37,21 +32,20 @@ v2Maior:    MOV  DH, QtdeV2
 resultado:  PUSHA
             MOV  CH, QtdeV1
             MOV  CL, QtdeV2
-            CMP  CH, CL
+            CMP  CH,CL           ;CMP so funciona com valores em registradores
             JNLE msgV1 
             JMP  msgV2
 
 msgV1:      MOV  DX, offset msg1
             JMP  print
 
-msgV2:      MOV DX, offset msg2            
-           
+msgV2:      MOV  DX, offset msg2            
+                    
 print:      MOV  AH, 9
-            int 21h
+            int  21h
             POPA
             RET
             
-
 
 ;Sao BYTES entao valores de 0-255
 ;Vou considerar que empates nunca acontecem (nao os tratei)
@@ -70,6 +64,9 @@ msg2   db "Vetor2 ganhou a disputa$"
 
 VetorM db 0
 
+;Devo colocar no final para nao escrever em cima dos outros dados
+;Nao existe "alocacao" dinamica em assembly, eh so eu literalmente colocar valores na memoria
+;VetorM na realidade eh so o endereco inicial do VetorM
 
 
 
