@@ -3,7 +3,7 @@
 ;Consideracoes:
 
 ;   O sistema buscara por novas entradas a cada novo deslocamento de andar
-;   O predio possui 8 andares
+;   O predio possui 8 andares (1 ao 8)
 ;
 
 org 100h
@@ -16,7 +16,7 @@ inicio:     call  acabou_luz
             
 
 acabou_luz: MOV AH, andar
-            MOV CH, 0
+            MOV CH, 1
             CMP CH, AH
             JE  return
 dec_luz:    CALL print_desce
@@ -29,6 +29,8 @@ dec_luz:    CALL print_desce
 print_desce: PUSHA
              MOV AH, 9h
              MOV DX, offset descendo
+             INT 21h
+             MOV DX, offset pulalin
              INT 21h
              POPA
              ret
@@ -45,5 +47,7 @@ flags DB  0, 0, 0, 0
 andar DB 4
 
 descendo db "O elevador desceu 1 andar$"
-teste    db "Isto eh um teste$"
+teste    db "Isto eh um teste$" 
+
+pulalin: db 0Dh,0Ah,'$'
 
