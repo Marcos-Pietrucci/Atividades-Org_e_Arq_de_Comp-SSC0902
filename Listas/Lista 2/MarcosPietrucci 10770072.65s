@@ -1,0 +1,39 @@
+; Teste do meu primeiro programa para o 6502
+
+;Marcos Vinícius Firmino Pietrucci 	10770072
+
+;Basta alterar os valores dos dados e inserir o tamanho na variavel Qtde
+
+	 	.ORG $0300	 
+	 	JMP Preparacao 
+	 	NOP
+Inicio:  	CLC		   ;Limpa a flag CARRY
+ 	 	ADC Dados,X        ;Adiciona ao ValorL Dados[X]
+	 	BCS Carry          ;Tratar o caso em que a soma gera um carry	
+Volta:	 	DEX		   ;Decrementa o indice X (Qtde)        	   
+	 	BMI Fim	           ;Caso o indc for -1 parar o programa
+	 	JMP Inicio 
+
+Carry:   	STA Soma,Y
+         	INY	   
+         	LDA Soma,Y	   
+	 	ADC #0            ;Só somar o valor do carry ja basta
+	 	STA Soma,Y
+	 	DEY	   
+	 	LDA Soma,Y
+	 	JMP Volta
+	
+Preparacao:     LDX Qtde 	   ;Carrega no registrador X o valor da quantidade
+		DEX		   ;Ajusta o valor de Qtde para ser o INDC dos dados
+	 	LDY #0		   ;Carrega no registrador Y o indc da Soma
+	 	LDA #0 	           ;Carrega o valor inicial da soma
+	 	JMP Inicio
+	 	
+Fim:	 	NOP
+		
+
+       		.ORG $1000
+Dados:          .DB 101, 102, 103, 104, 105  
+Qtde:           .DB 5		      
+Soma:           .DB 0,0     ;Contém a soma  byte HIGH e byte LOW
+; Padrao usado:  HIGH|LOW	      
