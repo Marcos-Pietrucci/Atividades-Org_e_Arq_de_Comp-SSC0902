@@ -1,4 +1,15 @@
-- As entradas dos usuarios serão por interrupções? (Aparentemente interrupções  por hardware não funcionam. Não tem como o programa detectar que eu digitei algo)
-	Não, devo abrir um espaço de tempo a cada loop para que o usuário digite um ou mais comandos. E se não tiver entradas? Não fazer nada (talvez voltar para o terreo)
 - Qual vai ser o "clock" de leitura?
-	- Vou considerar que a cada 1 andar que o elevador sobe/desce o programa abre uma chamada para buscar por novas entradas 
+	- Vou considerar que a cada 1 andar que o elevador sobe/desce o programa abre uma chamada para buscar por novas entradas
+
+- Como funciona o "Painel de Controle"?
+	- Algum comando faz o programa printar na tela essas informações?
+	- Devo printá-lo a cada iteração?
+
+- Qual será a prioridade do elevador? Se ele recebeu um comando para subir até o ultimo andar, ele o faz sem considerar os outros comandos?
+	- Devo indicar que o elevador parou para pegar ou deixar pessoas?
+
+- A flag "Sensor presença na Porta" é opicional? Pois me parece relacionado com um botão de "Manter porta aberta"
+	- Para que serve a flag "Sensor passou pelo andar" ?
+
+- Na situação de "faltou luz", eu tenho que saber quando elevador chega ao térreo, por isso eu preciso salvar em algum lugar o andar atual.
+Se eu destruir essa informação, como eu sei quando eu chego ao final? Em um elevador de verdade eu teria algum sensor específico, mas este recurso não temos na simulação
