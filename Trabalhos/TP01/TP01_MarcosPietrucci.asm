@@ -98,11 +98,17 @@ nao_acabou: CMP AH, 70h                 ;70h -> 112dec -> Tecla 'p'
             
             JNE  nao_para
             CALL para_elev 
+            
+            
+  ;------- Entrada s ---------;         ;A porta fica aberta ate inserir 's' novamente            
+nao_para:  CMP AH, 73h                  ;73h -> 115dec -> Tecla 's'
 
+           JNE  nao_obstruiu                                                                          
+           NOT  porta_aberta 
    
   ;----- Entradas de 'a' a 'h'                    
                              
-nao_para:   CMP AH, 68h                 ;As entradas de andares (a->h) sao valores de 96->104
+nao_obstruiu: CMP AH, 68h                 ;As entradas de andares (a->h) sao valores de 96->104
             
             JNLE continua2
             CALL manda_andar             ; Foi pedido o elevador em algum andar
@@ -214,9 +220,14 @@ acabou_luz  ENDP
 
 move_elevador     PROC     
                   MOV CH, andar
+                 
+                  CMP porta_aberta, 0FFh
+                  JNE volta
+                  CALL print_porta_aberta
+                  RET
                   
                   ;Testar se alguem quer entrar no elevador
-                  MOV BH,0 
+volta:            MOV BH,0 
                   MOV BL,andar
                   MOV AH, require_andar[BX]
                   CMP AH, BL
@@ -394,17 +405,31 @@ print_sobe   ENDP
  
 ;-------- Print da MSG de parado --------;            
 print_parado PROC
-             PUSHA
-             MOV AH, 9h 
+             PUSHA 
              CALL print_pulalin
              CALL print_pulalin
+             MOV AH, 9h
              MOV DX, offset msg_parado
              INT 21h
             
              POPA  
              RET
 print_parado ENDP   
-                             
+
+
+;-------- Print sobre a porta estar aberta ;
+
+print_porta_aberta PROC
+             
+             PUSHA
+             CALL print_pulalin
+             CALL print_pulalin
+             MOV DX, offset msg_porta_travada
+             INT 21h
+             
+             POPA
+             RET
+print_porta_aberta ENDP                            
  
  
  
@@ -428,6 +453,8 @@ msg_porta_fechada db "A porta foi fechada$"
 msg_parado db "O elevador esta parado no primeiro andar$"
 descendo db "O elevador desceu 1 andar$"
 subindo  db "O elevador subiu 1 andar$"
+msg_porta_travada db   "A porta esta obstruida, aguarde a desobstrucao para poder continuar$"
+
 pulalin db 0Dh,0Ah,'$'
 
 ; FLAGS do elevador
@@ -435,6 +462,7 @@ pulalin db 0Dh,0Ah,'$'
 terreo  DB 0
 topo    DB 0
 porta   DB 0    ;0 para fechada, 1 para aberta
+porta_aberta DB 0   ;Indica se a porta esta obstruida
 
 andar_destino DB 1     ;Inicialmente o elevador comeca sem pedidos
 sem_pedidos   DB 1
