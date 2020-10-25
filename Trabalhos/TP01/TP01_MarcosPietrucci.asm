@@ -32,8 +32,15 @@ org 100h
 main_loop:  LEA SI,entradas
             MOV DL, 0
             CALL le_teclado
+            CMP  energia, 1
+            JE   continua_loop
             CALL interpreta
-mov_func:   CALL move_elevador
+mov_func:   CMP energia, 1
+            JE  continua_loop
+            MOV energia, 1
+            JMP main_loop            
+continua_loop:CALL move_elevador
+            CALL painel_de_controle
             JMP main_loop 
             RET
             
@@ -104,7 +111,7 @@ nao_acabou: CMP AH, 70h                 ;70h -> 112dec -> Tecla 'p'
 nao_para:  CMP AH, 73h                  ;73h -> 115dec -> Tecla 's'
 
            JNE  nao_obstruiu                                                                          
-           NOT  porta_aberta 
+           NOT  sensor_obstr 
    
   ;----- Entradas de 'a' a 'h'                    
                              
@@ -165,12 +172,19 @@ manda_andar PROC
             RET
 manda_andar ENDP
 
-;------------- Para o elevador ------------;
+;------------- PARA o elevador ------------;
 
 para_elev   PROC
             PUSHA
-    
-bloqueado:  MOV AH, 0       ;Le a entrada
+            
+bloqueado:  CALL print_pulalin
+            CALL print_pulalin
+            MOV AH, 09h
+            MOV DX, offset msg_pause 
+            INT 21h
+            
+            CALL painel_de_controle
+            MOV AH, 0       ;Le a entrada
             INT 16h                  
             
             CMP AL, 50h     ;Caso nao for o 'P', continuar lendo
@@ -184,8 +198,16 @@ para_elev   ENDP
 
 
 acabou_luz  PROC
+            CALL print_pulalin
+            CALL print_pulalin
+            MOV AH,09h
+            MOV DX, offset pane
+            INT 21h
+            CALL print_pulalin
             LEA SI,entradas
-            MOV CL, 0
+            MOV DL, 0
+            MOV energia, 0
+            MOV sensor_obstr, 0
             MOV andar_destino, 1
             MOV sem_pedidos, 1 
             MOV require_andar[1],0
@@ -207,8 +229,10 @@ acabou_luz  PROC
             MOV AH, andar
             MOV CH, 1
             CMP CH, AH
-            JE  return          ;Verifica se ja estou no 1 
-dec_luz:    CALL print_desce
+            JE  return
+                          ;Verifica se ja estou no 1 
+dec_luz:    CALL elevador_desce
+            CALL painel_de_controle
             DEC AH
             CMP CH,AH
             JNE dec_luz
@@ -220,55 +244,41 @@ acabou_luz  ENDP
 
 move_elevador     PROC     
                   MOV CH, andar
-                 
-                  CMP porta_aberta, 0FFh
-                  JNE volta
-                  CALL print_porta_aberta
-                  RET
-                  
+                                   
                   ;Testar se alguem quer entrar no elevador
-volta:            MOV BH,0 
+                  MOV BH,0 
                   MOV BL,andar
                   MOV AH, require_andar[BX]
-                  CMP AH, BL
                   OR  porta, AH      ; Caso alguem queira entrar neste andar
                   
                   ;Se alguem entrou (porta aberta) remover a solicitacao de entrada
-                  CMP porta, 1
-                  MOV BL, andar
-                  MOV BH, 0
                   MOV require_andar[BX], 0
                   
-                  ;Testar caso alguem queira para neste andar
-                  MOV BH,0 
-                  MOV BL,andar
+                  ;Testar caso alguem queira parar neste andar
                   MOV AH, destino_andar[BX]
-                  CMP AH, BL
                   OR  porta, AH
                   
                   ;Se alguem saiu (porta aberta) remover a solicitacao de saida
-                  CMP porta, 1
-                  MOV BL, andar
-                  MOV BH, 0
                   MOV destino_andar[BX], 0                                  
                   
+                  ;Feito a carga e descarga, impedir qualquer movimento caso esteja obstruido
+                  CMP sensor_obstr, 0FFh
+                  JNE continua_mov
+                  CALL print_porta_obstr
+                  RET
+                  
                   ;Testar se o elevador deve ficar ocioso
-                  MOV AH, sem_pedidos
-                  CMP AH, 1
+continua_mov:     CMP sem_pedidos, 1
                   JE  busca_destino_ant  
                   
                   
                   ;Testar se estou no andar destino
-                  MOV AH, andar
-                  MOV AL, andar_destino
-                  CMP AH, AL
+                  MOV BH, andar
+                  MOV BL, andar_destino
+                  CMP BH, BL
                   JNE continua3
                   OR porta, 1b                          
-                  
-                  MOV BL, AH
-                  MOV BH, 0
-                  MOV destino_andar[BX], 0
-                                         
+                                           
                   ;Caso estiver no destino, devo buscar um novo destino
                   ;Procura destino nos botoes internos
 busca_destino_ant:MOV DI, 0
@@ -281,7 +291,7 @@ busca_destino:    INC DI
                   JNE  busca_destino
                 
                   ;Busca um destino nos botoes externos 
-busca_destino2:   MOV DI, -1
+busca_destino2:   MOV DI, 0
 loop_destino2:    INC DI
                   CMP DI, 9
                   JG  sem_destino
@@ -323,22 +333,23 @@ move_elevador ENDP
 ;--------- O elevador vai subir 1 andar ---;
 
 elevador_sobe     PROC
-                  
+                  PUSHA
                   MOV BL, andar
                   INC BL
                   MOV andar, BL
-                  
                   CALL print_sobe
+                  POPA
                   RET
 elevador_sobe     ENDP
                
 ;-------- O elevador vai descer 1 andar ---;
 elevador_desce     PROC
+                   PUSHA
                    MOV BL, andar
                    DEC BL
                    MOV andar, BL
                    CALL print_desce 
-                    
+                   POPA 
                    RET
 elevador_desce     ENDP
 
@@ -356,14 +367,17 @@ elevador_parado    ENDP
 ;-------- Print da MSG de descendo --------;            
 print_desce  PROC
              PUSHA
-             MOV AH, 9h 
-             
-             CMP porta, 1
-             JNE continua_desce
+             MOV AH, 9h
+             CALL print_pulalin 
+             CALL print_pulalin
+             CMP porta, 0
+             JE continua_desce
+             CMP energia, 0
+             JE fecha_apenas
              MOV DX, offset msg_porta_aberta
              INT 21h
              CALL print_pulalin
-             MOV DX, offset msg_porta_fechada
+fecha_apenas:MOV DX, offset msg_porta_fechada
              INT 21h
              MOV porta, 0
              
@@ -381,8 +395,9 @@ print_desce   ENDP
 ;-------- Print da MSG de subindo ---------;                                          
 print_sobe   PROC
              PUSHA
-             MOV AH, 9h 
-             
+             MOV AH, 9h
+             CALL print_pulalin 
+             CALL print_pulalin
              CMP porta, 1
              JNE continua_sobe
              MOV DX, offset msg_porta_aberta
@@ -419,17 +434,20 @@ print_parado ENDP
 
 ;-------- Print sobre a porta estar aberta ;
 
-print_porta_aberta PROC
+print_porta_obstr PROC
              
              PUSHA
              CALL print_pulalin
+             CALL print_pulalin
+             MOV DX, offset msg_porta_aberta
+             INT 21h
              CALL print_pulalin
              MOV DX, offset msg_porta_travada
              INT 21h
              
              POPA
              RET
-print_porta_aberta ENDP                            
+print_porta_obstr ENDP                            
  
  
  
@@ -442,19 +460,164 @@ print_pulalin PROC
 print_pulalin ENDP
 
 
+;-------- Painel de controle --------------;
+
+painel_de_controle PROC
+                   PUSHA
+                CALL print_pulalin
+                CALL print_pulalin
+                CALL print_pulalin
+                MOV AH,9h
+                MOV DX, offset titulo
+                INT 21h
+                CALL print_pulalin
+                
+                 
+                MOV CL, andar
+                ADD CL, 48 
+                 
+                CMP energia, 1
+                JE  escreve_andar
+                CMP andar, 1
+                JE  escreve_andar
+                MOV andar_atual[25], '?'
+                MOV DX, offset andar_atual
+                JMP escreve_andar2
+                
+escreve_andar:  MOV andar_atual[25], CL
+                MOV DX, offset andar_atual
+escreve_andar2: INT 21h
+                
+                CALL print_pulalin                
+                MOV DX, offset status_porta
+                INT 21h
+                CMP sensor_obstr, 0
+                JE porta_fechada
+                MOV DX, offset msg_status_porta_open
+                JMP escreve 
+porta_fechada:  MOV DX, offset msg_status_porta_close
+escreve:        INT 21h
+                
+                CALL print_pulalin
+                MOV DX, offset sensor
+                INT 21h
+                CMP sensor_obstr, 0
+                JE porta_livre
+                MOV DX, offset msg_sensor_on
+                JMP escreve2 
+porta_livre:    MOV DX, offset msg_sensor_off
+escreve2:       INT 21h
+         
+                CALL print_pulalin
+                CALL cont_pedidos_internos             ; O numero de pedidos internos esta em CH
+                CALL cont_pedidos_externos             ; O numero de pedidos externos esta em CL                
+                MOV AH, 9h
+                
+                ADD CL, 48
+                ADD CH, 48
+                MOV reqs_ext[18], CL
+                MOV reqs_int[18], CH
+                
+                MOV DX, offset reqs_ext
+                INT 21h
+                CALL print_pulalin
+                MOV DX, offset reqs_int
+                INT 21h
+                
+                CALL print_pulalin
+                MOV DX, offset comandos
+                INT 21h            
+                CALL print_pulalin
+                MOV DX, offset C1
+                INT 21h
+                CALL print_pulalin
+                MOV DX, offset C2
+                INT 21h
+                CALL print_pulalin
+                MOV DX, offset C3
+                INT 21h
+                CALL print_pulalin
+                MOV DX, offset C4
+                INT 21h
+                CALL print_pulalin
+                MOV DX, offset C5
+                INT 21h       
+                
+                POPA   
+                RET
+painel_de_controle ENDP                               
+;------ Conta pedidos internos    ----------;
+
+cont_pedidos_internos PROC
+               
+                MOV BX, -1
+                MOV CH, 0
+loop_pedidos:   INC BX
+                CMP BX, 9
+                JE  return
+                CMP destino_andar[BX], 1
+                JNE loop_pedidos
+                INC CH
+                JMP loop_pedidos
+               
+    
+                      RET
+cont_pedidos_internos ENDP
+
+;------ Conta pedidos externos    ----------;
+
+cont_pedidos_externos PROC
+               
+                MOV BX, -1
+                MOV CL, 0
+loop_pedidos2:  INC BX
+                CMP BX, 9
+                JE  return
+                CMP require_andar[BX], 1
+                JNE loop_pedidos2
+                INC CL
+                JMP loop_pedidos2
+               
+    
+                      RET
+cont_pedidos_externos ENDP
+
 ;------ Instrucoes de proposito geral ------;
 
 return: RET 
 
 
-;Definindo as variaveis
+;----------- Definindo as variaveis --------;
+
+; ---------- Prints e painel de controle ----------;
+
+titulo DB "-----Status atual do elevador------$"
+andar_atual DB "Andar atual do elevador:  $"
+status_porta DB "Status da porta: $"
+sensor       DB "Sensor de presenca: $"
+reqs_ext     DB "Pedidos externos:  $"
+reqs_int     DB "Pedidos internos:  $"
+comandos     DB "Comandos: $"
+C1           DB "- 1 ao 8 sao botoes EXTERNOS$"
+C2           DB "- 'a' ao 'h' sao botoes INTERNOS$"
+C3           DB "- 'x' indica falha de energia$"
+C4           DB "- 'p' e 'P' pausam e despausam (respectivamente) o elevador$"
+C5           DB "- 's' indica que a porta esta obstruida$"
+
+pane                  DB "!!!QUEDA DE ENERGIA!!!$"
+msg_pause             DB "O botao de PARAR foi pressionado$"
+msg_status_porta_open DB "Aberta$"
+msg_status_porta_close DB "Fechada$"
+
+msg_sensor_on        DB "Ativado$"
+msg_sensor_off       DB "Desativado$"
+
 msg_porta_aberta db "A porta foi aberta$"
 msg_porta_fechada db "A porta foi fechada$"
 msg_parado db "O elevador esta parado no primeiro andar$"
 descendo db "O elevador desceu 1 andar$"
 subindo  db "O elevador subiu 1 andar$"
 msg_porta_travada db   "A porta esta obstruida, aguarde a desobstrucao para poder continuar$"
-
 pulalin db 0Dh,0Ah,'$'
 
 ; FLAGS do elevador
@@ -462,10 +625,11 @@ pulalin db 0Dh,0Ah,'$'
 terreo  DB 0
 topo    DB 0
 porta   DB 0    ;0 para fechada, 1 para aberta
-porta_aberta DB 0   ;Indica se a porta esta obstruida
+sensor_obstr DB 0   ;Indica se a porta esta obstruida
 
 andar_destino DB 1     ;Inicialmente o elevador comeca sem pedidos
 sem_pedidos   DB 1
+energia       DB 1     ;Indica se a energia esta ligada ou nao
                        
 andar   DB 1
 
