@@ -488,9 +488,7 @@ imprime_terreo:       MOV DX, offset msg_terreo
                       INT 21h
                       JMP contiua_imp
 imprime_topo:         MOV DX, offset msg_topo
-                      INT 21h
-                      CALL print_pulalin                
-                      JMP contiua_imp         
+                      INT 21h                        
                       ;---------------------------------;
                       
                       ;Escreve o andar destino
