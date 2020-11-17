@@ -23,13 +23,13 @@ loop_leitura:
 	# sbrk (malloc)
     	li $a0, 8   # Aloca duas word (8 bytes) na memoria
     	li $v0,9    # 4 bytes para o valor, 4 bytes para o endereco do proximo
-    	syscall     # Armazena o endereço alocado em $v0
+    	syscall     
  
  	# Se for a primeira vez no loop, continuar
     	beq $s1, -1, continua_loop 
     	
     	# Se não, devo adicioanr o novo endereço ao nodo antigo (Linkar a lista)
-	sw $v0, 0($s3)  # Pega o endereço atualmente alocado
+	sw $v0, 0($s3)  # Armazena o endereço atualmente alocado
 	
 continua_loop:
 	
@@ -39,7 +39,6 @@ continua_loop:
     	add $s3, $s3, 4		# Avança 4 bytes no "nodo", atingindo a posição de escrever o endereço do próximo 
     	add $s1, $s1, 1         # Soma 1 no contador de leituras
 	
-
 	# Se não for a primeira alocação, continuar com o loop
 	bne $s1, $zero, loop_leitura
 	
@@ -70,14 +69,10 @@ loop_imprime:
     	la $a0, pulalin
     	syscall
 	
-	# S0 passa a acessar o endereço do próximo elemento
-	add $s0, $s0, 8    # Acessa o endereço do proximo!!
+	# Acessa o endereço do proximo!!
+	add $s0, $s0, 8    # S0 agora contém o endereço do próximo elemento
 	j loop_imprime
 	
  fim_codigo:	
  	nop
-	
-	
-
-	
-	
+ 	
