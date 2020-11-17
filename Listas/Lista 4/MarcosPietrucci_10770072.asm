@@ -1,62 +1,64 @@
 .data
-	vetor:     .word 15,31,63,127,255,511,1023,2047,4097,65536,0
-	raiz: 	   .word 0
-	pulalin:   .asciiz "\n"
+	vetor:     	.word 15, 31, 63, 127, 255, 511, 1023, 2047, 4097, 65536, 0
+	ListaInicio: 	.word 0
+	pulalin:   	.asciiz "\n"
 .text
 
 # S0 armazena o índice do vetor
 # S1 armazena a quantidade de valores que foram lidos
+# S2 armazena o valor da posição atual do vetor
 # S3 armazena o endereço alocado pelo sbrk
 
 	.globl main
 main:
-	#Inicializa variáveis de controle da leitura
+	# Inicializa variáveis de controle da leitura
 	la $s0, vetor
-	li $s1, -1      #flag que indica se é ou não a primeira vez que rodo o programa
+	li $s1, -1     
 	
-loop:
-	lw $s2, 0($s0)  #&s2 armazena os valores do vetor
+loop_leitura:
+
+	lw $s2, 0($s0)  # Carrega no S2 o valor do vetor
+	beq $s2, $zero, imprime_lista   # Testa se o valor lido foi o 0
 	
-	beq $s2, $zero, imprime_lista   #testa se o valor lido foi o 0
-	
-	# sbrk (malloc) => Aloca memoria (em blocos de 4 bytes - words)
-    	li $a0, 8   #aloca duas word (8 bytes) na memoria
+	# sbrk (malloc)
+    	li $a0, 8   # Aloca duas word (8 bytes) na memoria
     	li $v0,9    # 4 bytes para o valor, 4 bytes para o endereco do proximo
     	syscall     # Armazena o endereço alocado em $v0
  
-    	beq $s1, -1, continua_loop
-    	#Se nao for a primeira vez que executou
+ 	# Se for a primeira vez no loop, continuar
+    	beq $s1, -1, continua_loop 
     	
-	sw $v0, 0($s3)  #Pega o endereço atualmente alocado
+    	# Se não, devo adicioanr o novo endereço ao nodo antigo (Linkar a lista)
+	sw $v0, 0($s3)  # Pega o endereço atualmente alocado
 	
 continua_loop:
 	
-    	move $s3, $v0
-    	
-    	sw $s2, 0($s3)
-    	    	
-    	add $s0, $s0, 4
-    	add $s3, $s3, 4
-    	add $s1, $s1, 1
+    	move $s3, $v0		# Carrega em S3 o endereço alocado
+    	sw $s2, 0($s3)	  	# Carrega nos primeiros 4 bytes o valor lido do vetor
+    	add $s0, $s0, 4		# Avança o ponteiro do vetor para os próximos 4 bytes alocados
+    	add $s3, $s3, 4		# Avança 4 bytes no "nodo", atingindo a posição de escrever o endereço do próximo 
+    	add $s1, $s1, 1         # Soma 1 no contador de leituras
 	
 
-	bne $s1, $zero, loop	
-	#Armazenar o nó raiz no registrador $s4
-	sw  $v0, raiz
+	# Se não for a primeira alocação, continuar com o loop
+	bne $s1, $zero, loop_leitura
 	
-	j loop	
+	# Se foi, guardar o endereço do primeiro (ListaInicio)
+	sw  $v0, ListaInicio # Armazenar o endereço do ListaInicio
+	j loop_leitura	
 	
 imprime_lista:
-	#Inicializa variáveis de controle da leitura
-	li $s2, 2
-	la $s0, raiz
-	lw  $s0, 0($s0)
+
+	# Inicializa variáveis de controle da leitura
+	li $s2, 2		# Carrega um valor diferente de 0 no S2
+	la $s0, ListaInicio	# Carrega no S0 o endereço do ListaInicio
+	lw  $s0, 0($s0)		# Carrega no S0 o valor do ListaInicio (Que é o endereço do primeiro nodo alocado)
 
 loop_imprime:	
-
-	beq $s2, $zero, fim_codigo 
 	
-	lw $s2, 0($s0)
+	beq $s2, $zero, fim_codigo # Testa se o valor lido foi o 0
+	
+	lw $s2, 0($s0)		   # Carrega no S2 o valor contido no endereço S0
 	
 	# print int (Tela da Console)
     	li $v0, 1
@@ -68,12 +70,12 @@ loop_imprime:
     	la $a0, pulalin
     	syscall
 	
-	add $s0, $s0, 8    #Acessa o endereço do proximo!!
-
-	
+	# S0 passa a acessar o endereço do próximo elemento
+	add $s0, $s0, 8    # Acessa o endereço do proximo!!
 	j loop_imprime
 	
  fim_codigo:	
+ 	nop
 	
 	
 
