@@ -1,0 +1,35 @@
+#Exemplo bem bobo, mas que ilustra como trabalhar com vetores no MIPS
+
+#Coloca o endereço "entradas" no S0
+	la $s0, entradas 
+	li $t1, 5
+	
+	# Guarda na posição [0] o valor 5
+	sw $t1, 0($s0)
+	addi $t1, $t1, 5 
+	add $s0, $s0, 4  #Avanã no índice do vetor
+	addi $t1, $t1, 5
+	sw $t1, 0($s0)  # Guarda na posição [1] o valor 10
+	add $s0, $s0, 4
+	addi $t1, $t1, 5
+	sw $t1, 0($s0)
+	add $s0, $s0, 4
+	addi $t1, $t1, 5
+	sw $t1, 0($s0)
+	
+	#Carrega o "Nó inicial" do vetor em outro registrador
+	la $s1, entradas
+	 
+	li $v0, 1
+    	lw $a0, 0($s1)
+    	syscall
+    	add $s1, $s1, 4 #Shifta entre os valores somando 4 a 4 bytes
+    	
+    	li $v0, 4
+    	la $a0, pulalin
+    	syscall
+    	
+    	li $v0, 1
+    	lw $a0, 0($s1)
+    	syscall
+    	add $s1, $s1, 4
