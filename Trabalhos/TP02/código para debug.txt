@@ -1,0 +1,67 @@
+	la $s1, pedidos_internos_e1
+	la $s2, pedidos_internos_e2
+	li $s3, 0
+
+lupi1:
+	beq $s3, 8, vai_mano
+	li $v0, 1
+	lb $a0, 0($s1)
+	syscall
+	li $v0,4
+    	la $a0,espaco
+    	syscall
+	
+	addu $s1, $s1, 1
+	addu $s3, $s3, 1
+	j lupi1
+
+vai_mano:
+
+	li $v0,4
+    	la $a0,pulalin
+    	syscall
+
+
+	li $s3, 0
+lupi:
+	beq $s3, 8, fim_real
+	li $v0, 1
+	lb $a0, 0($s1)
+	syscall
+	addu $s1, $s1, 1
+	addu $s3, $s3, 1
+	
+	li $v0,4
+    	la $a0,espaco
+    	syscall
+    	j lupi
+	
+fim_real:
+
+	li $v0,4
+    	la $a0,pulalin
+    	syscall
+
+	li $v0, 1
+	la $t1, destino_e1
+	lb $a0, 0($t1)
+	syscall
+	li $v0,4
+    	la $a0,espaco
+    	syscall
+    	
+    	li $v0,4
+    	la $a0,pulalin
+    	syscall
+    	
+    	li $v0, 1
+	la $t1, destino_e2
+	lb $a0, 0($t1)
+	syscall
+	li $v0,4
+    	la $a0,espaco
+    	syscall
+	
+	nop
+
+#pode ser útil no futuro
