@@ -1,24 +1,412 @@
-#TP02 Marcos Vinícius Firmino Pietrucci
+# TP02 Marcos Vinícius Firmino Pietrucci
+#      10770072
 
 # Endereços mapeados em memória
 #CONS_RECEIVER_CONTROL           =   0xffff0000
 #CONS_RECEIVER_DATA              =   0xffff0004
 
-# Código param manipular valores na STACK
-#sub $sp, $sp, 8 
-#sw $t1, 4($sp) 
-#sw $t2, 0($sp)
+# S0 é reservado para o arquivo
 
-    .text
+.text
+    	# Abrir arquivo
+	li   $v0, 13       
+	la   $a0, nome_arquivo
+	li   $a1, 1		# Flag para escrita        
+	li   $a2, 0        
+	syscall            # open a file 
+
+	move $s0, $v0      # save the file descriptor 	
+    	# S0 é reservado exclusivamente para o FD
+ 
 main:
-	
-	jal imprime_painel_controle
 	jal esperar_key
 	jal processa_entradas
 	jal movimenta_elevadores
+	jal imprime_painel_controle
+	jal escreve_arquivo
 	
 	j main
 
+##### Função que escreve o LOG de ações dos elevadores ####
+escreve_arquivo:
+	
+	# Ecreve pulalin: 
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, pulalin 
+	li   $a2, 1       
+	syscall 
+	
+	# Ecreve pulalin: 
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, pulalin 
+	li   $a2, 1       
+	syscall 
+	
+	# Ecreve E1: 
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, str_e1 
+	li   $a2, 4       
+	syscall
+	
+	# Ecreve andar atual:
+	lb $t1, andar_e1
+	add $t1, $t1, 48	# Transforma em caractere
+	sb $t1, aux_print
+	  
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, aux_print
+	li   $a2, 1       
+	syscall
+	
+	# Ecreve espaco: 
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, espaco 
+	li   $a2, 1       
+	syscall 
+	
+	# Ecreve andar destino:
+	lb $t1, destino_e1
+	add $t1, $t1, 48	# Transforma em caractere
+	sb $t1, aux_print
+	  
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, aux_print
+	li   $a2, 1       
+	syscall
+	
+	# Ecreve espaco: 
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, espaco 
+	li   $a2, 1       
+	syscall
+	
+	# Verificar status da porta
+	lb $t1, porta_e1
+	beq $t1, 0, print_F_e1
+	
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, str_A
+	li   $a2, 1       
+	syscall
+	j printa_estado_e1
+	
+print_F_e1:
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, str_F
+	li   $a2, 1       
+	syscall
+	
+printa_estado_e1:
+	# Ecreve espaco: 
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, espaco 
+	li   $a2, 1       
+	syscall 
+	
+	# Verificar estado do elevador
+	lb $t1, estado_e1
+	beq $t1, 0, print_P_e1
+	
+	# Verifica se o elevador está parado no terreo
+	lb $t1, TemDestino_e1
+	lb $t2, andar_e1
+	
+	beq $t1, 1,  print_M_e1
+	beq $t2, 1, print_P_e1 
+	
+print_M_e1:
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, str_M
+	li   $a2, 1       
+	syscall
+	j print_elevador_e2
+	
+print_P_e1:
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, str_P
+	li   $a2, 1       
+	syscall
+	
+print_elevador_e2:
+	# Ecreve pulalin: 
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, pulalin 
+	li   $a2, 1       
+	syscall 
+	
+	# Ecreve E2: 
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, str_e2 
+	li   $a2, 4       
+	syscall
+	
+	# Ecreve andar atual:
+	lb $t1, andar_e2
+	add $t1, $t1, 48	# Transforma em caractere
+	sb $t1, aux_print
+	  
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, aux_print
+	li   $a2, 1       
+	syscall
+	
+	# Ecreve espaco: 
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, espaco 
+	li   $a2, 1       
+	syscall 
+	
+	# Ecreve andar destino:
+	lb $t1, destino_e2
+	add $t1, $t1, 48	# Transforma em caractere
+	sb $t1, aux_print
+	  
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, aux_print
+	li   $a2, 1       
+	syscall
+	
+	# Ecreve espaco: 
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, espaco 
+	li   $a2, 1       
+	syscall
+	
+	# Verificar status da porta
+	lb $t1, porta_e2
+	beq $t1, 0, print_F_e2
+	
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, str_A
+	li   $a2, 1       
+	syscall
+	j printa_estado_e2
+	
+print_F_e2:
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, str_F
+	li   $a2, 1       
+	syscall
+	
+printa_estado_e2:
+	# Ecreve espaco: 
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, espaco 
+	li   $a2, 1       
+	syscall 
+	
+	# Verificar estado do elevador
+	lb $t1, estado_e2
+	beq $t1, 0, print_P_e2
+	
+	# Verifica se o elevador está parado no terreo
+	lb $t1, TemDestino_e2
+	lb $t2, andar_e2
+	
+	beq $t1, 1,  print_M_e2
+	beq $t2, 1, print_P_e2
+	
+print_M_e2:
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, str_M
+	li   $a2, 1       
+	syscall
+	j print_pedidos
+
+print_P_e2:
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, str_P
+	li   $a2, 1       
+	syscall
+	
+print_pedidos:
+	# Ecreve pulalin: 
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, pulalin 
+	li   $a2, 1       
+	syscall 
+	
+	# Ecreve B1: 
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, str_B1  
+	li   $a2, 4       
+	syscall 
+	
+	la $s1, pedidos_internos_e1 
+	li $s2, 1
+
+loop_escreve_internos_e1:
+	beq $s2, 9, escreve_internos_e2
+	
+	lb $t1, 0($s1)
+	
+	beq $t1, 0, escreve_zero_e1
+	# Ecreve 1: 
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, str_um  
+	li   $a2, 2       
+	syscall
+	j continua_loop_escreve_e1
+escreve_zero_e1:
+	# Ecreve 0: 
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, str_zero  
+	li   $a2, 2       
+	syscall
+	
+continua_loop_escreve_e1:
+	add $s1, $s1, 1
+	add $s2, $s2, 1
+	j loop_escreve_internos_e1
+	
+escreve_internos_e2:
+
+	# Ecreve pulalin: 
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, pulalin 
+	li   $a2, 1       
+	syscall 
+	
+	# Ecreve B2: 
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, str_B2  
+	li   $a2, 4       
+	syscall 
+	
+	la $s1, pedidos_internos_e2 
+	li $s2, 1
+
+loop_escreve_internos_e2:
+	beq $s2, 9, escreve_externos
+	
+	lb $t1, 0($s1)
+	
+	beq $t1, 0, escreve_zero_e2
+	# Ecreve 1: 
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, str_um  
+	li   $a2, 2       
+	syscall
+	j continua_loop_escreve_e2
+escreve_zero_e2:
+	# Ecreve 0: 
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, str_zero  
+	li   $a2, 2       
+	syscall
+	
+continua_loop_escreve_e2:
+	add $s1, $s1, 1
+	add $s2, $s2, 1
+	j loop_escreve_internos_e2
+
+escreve_externos:
+	
+	# Ecreve pulalin: 
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, pulalin 
+	li   $a2, 1       
+	syscall 
+	
+	# Ecreve BE: 
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, str_BE  
+	li   $a2, 4       
+	syscall 
+	
+	la $s1, pedidos_externos
+	li $s2, 1
+
+loop_escreve_externo:
+	beq $s2, 9, escreve_teclas
+	
+	lb $t1, 0($s1)
+	
+	beq $t1, 0, escreve_zero_externo
+	# Ecreve 1: 
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, str_um  
+	li   $a2, 2       
+	syscall
+	j continua_loop_escreve_externo
+escreve_zero_externo:
+	# Ecreve 0: 
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, str_zero  
+	li   $a2, 2       
+	syscall
+	
+continua_loop_escreve_externo:
+	add $s1, $s1, 1
+	add $s2, $s2, 1
+	j loop_escreve_externo
+
+escreve_teclas:	
+	# Pulalin
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, pulalin 
+	li   $a2, 1       
+	syscall
+	
+	# Escreve TC
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, str_TC  
+	li   $a2, 4       
+	syscall 
+	
+	lb $s2, qtde_teclas
+	
+	# Imprime o vetor de teclas
+	li   $v0, 15      
+	move $a0, $s0      
+	la   $a1, str_teclas  
+	move $a2, $s2       
+	syscall
+	
+	li $t1, 0
+	sb $t1, qtde_teclas
+	
+	jr $ra
+
+
+###### Função que imprime todas as informações dos dois elevadores ######
 imprime_painel_controle:
 	
 	li $v0, 4
@@ -47,7 +435,7 @@ imprime_painel_controle:
 	syscall
 	
 	lb $t2, estado_e1 
-	beq $t2, 1, verifica_destino
+	beq $t2, 1, verifica_destino_e1
 	
 	#Elevador bloqueado
 	li $v0, 4
@@ -56,9 +444,9 @@ imprime_painel_controle:
 	
 	j lista_req_internas_e1
 
-verifica_destino:
+verifica_destino_e1:
 	lb $t1, TemDestino_e1
-	beq $t1, 0, verifica_novamente
+	beq $t1, 0, verifica_novamente_e1
 	
 	#Se está aqui, significa que o elevador está funcional e tem destino
 	li $v0, 4
@@ -75,10 +463,9 @@ verifica_destino:
 	
 	j lista_req_internas_e1
 
-verifica_novamente:
-	
+verifica_novamente_e1:
 	lb $t1, andar_e1
-	beq $t1, 1, esta_no_terreo  # Verificar se o elevador está no térreo
+	beq $t1, 1, esta_no_terreo_e1  # Verificar se o elevador está no térreo
 	
 	lb $t1, porta_e1
 	beq $t1, 1, porta_aberta_e1
@@ -101,7 +488,7 @@ porta_aberta_e1:
 	syscall
 	j lista_req_internas_e1
 	
-esta_no_terreo:
+esta_no_terreo_e1:
 	#Se entrou aqui, o E1 está parado no térreo
 	li $v0, 4
 	la $a0, str_parado
@@ -109,7 +496,7 @@ esta_no_terreo:
 	
 lista_req_internas_e1:
 	
-	# Vetor
+	# Vetor de pedidos internos
 	la $s1, pedidos_internos_e1
 	li $s2, 1
 	
@@ -136,7 +523,7 @@ loop_pedidos_e1:
 	
 	j loop_pedidos_e1
 
-  ##### Prints referentes ao elevador 2 ####
+	# Prints referentes ao elevador 2 #
 prints_e2:
 	
 	li $v0, 4
@@ -251,9 +638,13 @@ loop_pedidos_e2:
 	add $s2, $s2, 1
 	j loop_pedidos_e2
 
+  ### Imprimir a lista de requisições externas ###
 print_pedidos_ext:
 	li $v0, 4
 	la $a0, pulalin  
+	syscall
+	li $v0, 4
+	la $a0, pulalin
 	syscall
 	
 	la $s1, pedidos_externos
@@ -282,7 +673,7 @@ loop_pedidos_ext:
 
 	nop
 
-##### Função que realiza os movmentos necessários dos elevadores  ######
+##### Função que realiza os movmentos dos elevadores  ######
 movimenta_elevadores:
 	
 	# Variáveis de controle
@@ -302,15 +693,14 @@ verifica_porta_e2:
 	
 continua_movimento:
 	beq $s3, 0, anda_elevador2	# Se o elevador 1 estiver bloqueado, verificar o segundo
-	beq $s1, 0, anda_elevador2	# Se o destino for "0" significa que deve ficar parado
 	
 	lb $s5, andar_e1		
 	sub $s7, $s1, $s5		# Subtrai  Destino - andar_atual
 	bne $s7, 0, move_elevador1	# Se já estiver no destino, não faz nada
 	
 	# Se está aqui, significa que chegou no destino
+	# Resetar variáveis
 	li $t1, 1
-	sb $t1, terreo_e1
 	sb $t1, destino_e1
 	sb $zero, TemDestino_e1
 	sb $t1, porta_e1
@@ -322,34 +712,34 @@ move_elevador1:
 	
 	# Se está aqui, significa que devo subir o elevador
 	addu $s5, $s5, 1
-	sb $s5, andar_e1
-	
-	# Imprime mensagem de subida
-	li $v0, 4
-	la $a0, elevador1_subiu
-	syscall	
-	
-	j anda_elevador2
+	sb $s5, andar_e1	
+	j verifica_situacao_destino_e1
 	
 desce_elevador1:
 	subu $s5, $s5, 1
 	sb $s5, andar_e1
 	
-	# Imprime mensagem de descida
-	li $v0, 4
-	la $a0, elevador1_desceu
-	syscall	
+verifica_situacao_destino_e1:
+	
+	# Pode ser que ao mover 1 o E1 tenha alcançado o destino
+	lb $t1, andar_e1
+	bne $s1, $t1, anda_elevador2
+	
+	# Alcançou o desino!
+	# Resetar variáveis
+	li $t1, 1
+	sb $t1, destino_e1
+	sb $zero, TemDestino_e1
+	sb $t1, porta_e1
 	
 anda_elevador2:
 	beq $s4, 0, return		# Se o elevador 2 estiver bloquado, voltar
-	beq $s2, 0, return		# Se o destino for "0" ficar parado 
 	lb $s5, andar_e2
 	sub $s7, $s2, $s5		# Subtrai  Destino - andar_atual
-	bne $s7, 0, movimenta_elevador2 # Se for se movimentar
+	bne $s7, 0, movimenta_elevador2 # Se for diferente de 0, se movimentar
 	
 	# Se está aqui, o elevador 2 atingiu seu destino
 	li $t1, 1
-	sb $t1, terreo_e2
 	sb $t1, destino_e2
 	sb $zero, TemDestino_e2
 	sb $t1, porta_e2
@@ -361,22 +751,25 @@ movimenta_elevador2:
 	#Se está aqui, significa que devo subir o elevador
 	addu $s5, $s5, 1
 	sb $s5, andar_e2
-	
-	# Imprimir mensagem de subida
-	li $v0, 4
-	la $a0, elevador2_subiu
-	syscall	
-	
-	jr $ra
+	j verifica_situacao_destino_e2
 	
 desce_elevador2:
+	# Subtrair o andar do elevador
 	subu $s5, $s5, 1
 	sb $s5, andar_e2
 	
-	# Imprimir mensagem de descida
-	li $v0, 4
-	la $a0, elevador2_desceu
-	syscall	
+verifica_situacao_destino_e2:
+	
+	# Pode ser que ao mover 1 o E2 tenha alcançado o destino
+	lb $t1, andar_e2
+	bne $s2, $t1, return
+	
+	# Alcançou o desino!
+	# Resetar variáveis
+	li $t1, 1
+	sb $t1, destino_e2
+	sb $zero, TemDestino_e2
+	sb $t1, porta_e2
 	
 	jr $ra
 	
@@ -535,6 +928,29 @@ esperar_key:
 	j esperar_key
 
 tratar_entrada:
+
+	# Adicionar a entrada no vetor de entradas
+	lb $t1, qtde_teclas
+	la $t2, str_teclas
+	add $t1, $t1, 1
+	sb $t1, qtde_teclas
+	li $t3, 0
+	
+procura_lugar_vetor:
+	beq $t3, $t1, continuar_leitura
+	add $t3, $t3, 1
+	add $t2, $t2, 1
+	j procura_lugar_vetor
+continuar_leitura:
+	sb $s2, ($t2)
+	
+	# Adicionar espaço no vetor de entradas
+	add $t1, $t1, 1
+	add $t2, $t2, 1 
+	sb $t1, qtde_teclas
+	li $t3, 32   			#Código ASCII para espaço
+	sb $t3, ($t2)			# Armazena
+		
 	#39 é o código ascii em hexa para '8'
 	li $t1, 56
 	ble $s2, $t1, entrada_numero
@@ -646,19 +1062,19 @@ continua16:
 continua17:
 	bne $s2, 'c', continua18
 	li $t1, 0
-	sw $t1, estado_e2
+	sb $t1, estado_e2
 	j esperar_key
 	
 continua18:
 	bne $s2, 'x', continua19
 	li $t1, 1
-	sw $t1, estado_e1
+	sb $t1, estado_e1
 	j esperar_key
 
 continua19:
 	bne $s2, 'v', continua19
 	li $t1, 1
-	sw $t1, estado_e2
+	sb $t1, estado_e2
 	j esperar_key
 	
 insere_pedidoInterno:
@@ -693,6 +1109,22 @@ fim:
 	nop
 
     .data
+    
+nome_arquivo:    .asciiz "log_saida.txt"
+str_e1:		 .asciiz "E1: "
+str_e2:		 .asciiz "E2: "
+str_A:		.asciiz "A "
+str_F:		.asciiz "F "
+str_M:		.asciiz "M "
+str_P:		.asciiz "P "
+str_BE:		.asciiz "BE: " 
+str_B1:		.asciiz "B1: "
+str_B2:		.asciiz "B2: " 
+str_TC:		.asciiz "TC: "
+str_um:		.asciiz "1 "
+str_zero:	.asciiz "0 "
+aux_print:	.asciiz " "
+   
 titulo_e1:	 .asciiz "###### ELEVADOR 1 ######"
 titulo_e2:	 .asciiz "###### ELEVADOR 2 ######"
 str_andar_atual: .asciiz "\nAndar atual: "
@@ -708,6 +1140,8 @@ elevador1_subiu: .asciiz "\nO elevador 1 subiu 1 andar"
 elevador2_subiu: .asciiz "\nO elevador 2 subiu 1 andar"
 elevador1_desceu: .asciiz "\nO elevador 1 desceu 1 andar"
 elevador2_desceu: .asciiz "\nO elevador 2 desceu 1 andar"
+str_teclas:	  .space 56
+qtde_teclas:      .byte 0
 pulalin: .asciiz "\n"
 espaco:  .asciiz " "
 
@@ -716,8 +1150,6 @@ pedidos_internos_e1: .byte 0, 0, 0, 0, 0, 0, 0, 0
 pedidos_internos_e2: .byte 0, 0, 0, 0, 0, 0, 0, 0
 destino_e1: .byte 1
 destino_e2: .byte 1
-terreo_e1:  .byte 1
-terreo_e2:  .byte 1
 TemDestino_e1:  .byte 0
 TemDestino_e2:  .byte 0
 andar_e1:   .byte 1
