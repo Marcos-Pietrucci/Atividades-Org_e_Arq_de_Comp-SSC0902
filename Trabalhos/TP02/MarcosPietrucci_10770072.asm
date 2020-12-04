@@ -1,12 +1,10 @@
 # TP02 Marcos Vinícius Firmino Pietrucci
 #      10770072
 
-# Endereços mapeados em memória
-#CONS_RECEIVER_CONTROL           =   0xffff0000
-#CONS_RECEIVER_DATA              =   0xffff0004
+#       Deletar o arquivo antes de iniciar o programa!!
+# 	Deixar o programa criar o arquivo, caso contrário acontecerá erro
 
-# S0 é reservado para o arquivo
-
+# Endereços mapeados em memória para leitura
 .text
     	# Abrir arquivo
 	li   $v0, 13       
@@ -18,6 +16,7 @@
 	move $s0, $v0      # save the file descriptor 	
     	# S0 é reservado exclusivamente para o FD
  
+##### Função principal que contém o loop do elevador #####
 main:
 	jal esperar_key
 	jal processa_entradas
@@ -1096,16 +1095,7 @@ print_msg:
 return:
 	jr $ra
 
-fim:	
-	li $v0, 1
-	lb $a0, destino_e1
-	syscall
-	li $v0,4
-    	la $a0,espaco
-    	syscall
-    	li $v0, 1
-	lb $a0, destino_e2
-	syscall	
+fim:		
 	nop
 
     .data
