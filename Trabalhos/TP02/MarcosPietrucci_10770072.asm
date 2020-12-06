@@ -9,8 +9,8 @@
     	# Abrir arquivo
 	li   $v0, 13       
 	la   $a0, nome_arquivo
-	li   $a1, 1		# Flag para escrita        
-	li   $a2, 0        
+	li $a1, 1            
+	li $a2, 0         
 	syscall            # open a file 
 
 	move $s0, $v0      # save the file descriptor 	
@@ -1071,10 +1071,14 @@ continua18:
 	j esperar_key
 
 continua19:
-	bne $s2, 'v', continua19
+	bne $s2, 'v', continua20
 	li $t1, 1
 	sb $t1, estado_e2
 	j esperar_key
+
+continua20:
+	bne $s2, 'b', esperar_key
+	j fim
 	
 insere_pedidoInterno:
 	#O índice do pedido está em $a1
@@ -1095,11 +1099,15 @@ print_msg:
 return:
 	jr $ra
 
-fim:		
+fim:	
+	li $v0, 16
+	move $a0, $s0
+	syscall	
 	nop
 
     .data
-    
+
+##### String referentes ao arquivo ####
 nome_arquivo:    .asciiz "log_saida.txt"
 str_e1:		 .asciiz "E1: "
 str_e2:		 .asciiz "E2: "
@@ -1114,7 +1122,8 @@ str_TC:		.asciiz "TC: "
 str_um:		.asciiz "1 "
 str_zero:	.asciiz "0 "
 aux_print:	.asciiz " "
-   
+
+####### Strings do print na tela #########
 titulo_e1:	 .asciiz "###### ELEVADOR 1 ######"
 titulo_e2:	 .asciiz "###### ELEVADOR 2 ######"
 str_andar_atual: .asciiz "\nAndar atual: "
@@ -1135,6 +1144,7 @@ qtde_teclas:      .byte 0
 pulalin: .asciiz "\n"
 espaco:  .asciiz " "
 
+###### Strings de controle interno do elevador ######
 pedidos_externos:    .byte 0, 0, 0, 0, 0, 0, 0, 0  #Manipilar com sb e lb
 pedidos_internos_e1: .byte 0, 0, 0, 0, 0, 0, 0, 0
 pedidos_internos_e2: .byte 0, 0, 0, 0, 0, 0, 0, 0
