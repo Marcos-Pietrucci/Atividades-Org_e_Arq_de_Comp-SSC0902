@@ -1,10 +1,15 @@
 # TP02 Marcos Vinícius Firmino Pietrucci
 #      10770072
 
-#       Deletar o arquivo antes de iniciar o programa!!
-# 	Deixar o programa criar o arquivo, caso contrário acontecerá erro
+# Para evitar bugs no log:
 
-# Endereços mapeados em memória para leitura
+# - Não deixe o programa criar o arquivo "log_saida.txt"! O programa tem problemas ao criar o arquivo
+# - Por favor, crie um arquivo vazio: "log_saida.txt" antes de executar o programa
+# - Não feche o programa! Pressione 'b' para finalizar. Assim o arquivo será devidamente fechado
+#- Ainda assim pode acontecer de o arquivo se corromper, caso aconteça, deletar o conteúdo do arquivo e tentar mais uma vez
+
+#Leitura usando MMIO
+
 .text
     	# Abrir arquivo
 	li   $v0, 13       

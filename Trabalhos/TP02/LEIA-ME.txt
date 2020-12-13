@@ -1,0 +1,8 @@
+Para evitar bugs no log:
+
+- Não deixe o programa criar o arquivo "log_saida.txt"! O programa tem problemas ao criar o arquivo
+- Por favor, crie um arquivo vazio: "log_saida.txt" antes de executar o programa
+
+- Não feche o programa! Pressione 'b' para finalizar. Assim o arquivo será devidamente fechado
+
+- Ainda assim pode acontecer de o arquivo se corromper, caso aconteça, deletar o conteúdo do arquivo e tentar mais uma vez
